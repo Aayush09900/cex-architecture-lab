@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-       - name: Verify secret is available
+      - name: Verify secret is available
         env:
           DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
         run: |
