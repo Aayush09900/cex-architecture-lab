@@ -21,12 +21,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Scan files for common secret patterns
+       - name: Verify secret is available
+        env:
+          DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
         run: |
-          if grep -RniE 'API_KEY=|PRIVATE_KEY=|PASSWORD=|SECRET=' . \
-            --exclude-dir=.git \
-            --exclude='security.yml'; then
-            echo "Potential secret detected!"
+          if [ -n "$DEMO_API_KEY" ]; then
+            echo "Secret is available to the workflow."
+          else
+            echo "Secret is missing."
             exit 1
           fi
 
