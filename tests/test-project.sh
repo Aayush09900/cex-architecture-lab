@@ -2,7 +2,7 @@
 
 echo "Running project tests..."
 
-if [ -f README.md ]; then
+if [ -f README-NOT-FOUND.md ]; then
   echo "PASS: README.md exists"
 else
   echo "FAIL: README.md is missing"
