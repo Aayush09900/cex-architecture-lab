@@ -15,5 +15,4 @@ else
   echo "FAIL: GitHub Actions workflow is missing"
   exit 1
 fi
-
 echo "All project tests passed!"
