@@ -1,0 +1,30 @@
+name: Security Check
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  secret-check:
+    name: Check for obvious secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan files for common secret patterns
+        run: |
+          if grep -RniE 'API_KEY=|PRIVATE_KEY=|PASSWORD=|SECRET=' . \
+            --exclude-dir=.git \
+            --exclude='security.yml'; then
+            echo "Potential secret detected!"
+            exit 1
+          fi
+
+          echo "No obvious secret patterns found."
