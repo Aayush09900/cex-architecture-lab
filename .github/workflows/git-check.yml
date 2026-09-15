@@ -1,4 +1,4 @@
-name: Git Check
+name: CEX CI
 
 on:
   push:
@@ -10,7 +10,8 @@ on:
       - main
 
 jobs:
-  check:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -21,3 +22,18 @@ jobs:
         run: |
           chmod +x tests/test-project.sh
           ./tests/test-project.sh
+
+  validate:
+    name: Validate Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          test -f README.md
+          test -f tests/test-project.sh
+          test -f .github/workflows/git-check.yml
+          echo "Project validation passed!"
