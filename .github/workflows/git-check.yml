@@ -1,0 +1,17 @@
+name: Git Check
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Git check
+        run: echo "GitHub Actions is working!"
