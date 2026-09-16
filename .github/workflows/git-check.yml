@@ -2,24 +2,25 @@ name: CEX CI
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: cex-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run project tests
         run: |
@@ -29,14 +30,15 @@ jobs:
   validate:
     name: Validate Project
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Check required files
         run: |
           test -f README.md
           test -f tests/test-project.sh
           test -f .github/workflows/git-check.yml
+          test -f .github/workflows/security.yml
+          test -f .github/workflows/codeql.yml
           echo "Project validation passed!"
