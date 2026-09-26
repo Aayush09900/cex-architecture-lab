@@ -1,57 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {Test} from "forge-std/Test.sol";
 import {CexSettlementAdapter} from "../src/CexSettlementAdapter.sol";
 
-contract CexSettlementAdapterTest {
+contract CexSettlementAdapterTest is Test {
     CexSettlementAdapter adapter;
-    address operator = address(0xBEEF);
-    address beneficiary = address(0xCAFE);
+    address operator = makeAddr("operator");
+    address beneficiary = makeAddr("beneficiary");
 
     function setUp() public {
         adapter = new CexSettlementAdapter(operator);
     }
 
     function testOperatorCanRecordOnce() public {
-        setUp();
         bytes32 id = keccak256("settlement-1");
-        _prank(operator);
+        vm.prank(operator);
         adapter.recordSettlement(id, beneficiary, 1 ether);
-        require(adapter.processed(id), "settlement not recorded");
+        assertTrue(adapter.processed(id));
     }
 
     function testZeroAmountRejected() public {
-        setUp();
         bytes32 id = keccak256("settlement-zero");
-        _prank(operator);
-        try adapter.recordSettlement(id, beneficiary, 0) {
-            revert("expected zero amount rejection");
-        } catch {}
+        vm.prank(operator);
+        vm.expectRevert(CexSettlementAdapter.ZeroAmount.selector);
+        adapter.recordSettlement(id, beneficiary, 0);
     }
 
     function testDuplicateRejected() public {
-        setUp();
         bytes32 id = keccak256("settlement-duplicate");
-        _prank(operator);
+        vm.startPrank(operator);
         adapter.recordSettlement(id, beneficiary, 1);
-        _prank(operator);
-        try adapter.recordSettlement(id, beneficiary, 1) {
-            revert("expected duplicate rejection");
-        } catch {}
+        vm.expectRevert(CexSettlementAdapter.AlreadyProcessed.selector);
+        adapter.recordSettlement(id, beneficiary, 1);
+        vm.stopPrank();
     }
 
     function testUnauthorizedRejected() public {
-        setUp();
         bytes32 id = keccak256("settlement-auth");
-        _prank(address(0x1234));
-        try adapter.recordSettlement(id, beneficiary, 1) {
-            revert("expected authorization rejection");
-        } catch {}
+        vm.prank(makeAddr("attacker"));
+        vm.expectRevert(CexSettlementAdapter.NotOperator.selector);
+        adapter.recordSettlement(id, beneficiary, 1);
     }
 
-    function _prank(address) internal pure {
-        // Placeholder for Foundry cheatcode wiring when run with forge.
-        // The repository's Solidity CI should compile this suite; integration tests
-        // can bind the standard vm.startPrank cheatcode in a follow-up layer.
+    function testZeroBeneficiaryRejected() public {
+        vm.prank(operator);
+        vm.expectRevert(CexSettlementAdapter.ZeroBeneficiary.selector);
+        adapter.recordSettlement(keccak256("zero-beneficiary"), address(0), 1);
     }
 }
