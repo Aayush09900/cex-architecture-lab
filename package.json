@@ -1,0 +1,11 @@
+{
+  "name": "cex-architecture-lab-contracts",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "contracts:compile": "solcjs --bin --abi contracts/CexSettlementAdapter.sol -o build/contracts"
+  },
+  "devDependencies": {
+    "solc": "^0.8.30"
+  }
+}
