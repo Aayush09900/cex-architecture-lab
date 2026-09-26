@@ -1,18 +1,31 @@
 #!/bin/bash
+set -euo pipefail
 
-echo "Running project tests..."
+echo "Running project checks..."
 
-if [ -f README.md ]; then
-  echo "PASS: README.md exists"
+required_files=(
+  "README.md"
+  "CONTRIBUTING.md"
+  "SECURITY.md"
+  ".github/workflows/git-check.yml"
+  ".github/workflows/security.yml"
+  ".github/workflows/codeql.yml"
+)
+
+for file in "${required_files[@]}"; do
+  if [[ -f "$file" ]]; then
+    echo "PASS: $file exists"
+  else
+    echo "FAIL: $file is missing"
+    exit 1
+  fi
+done
+
+if grep -q "Detailed decisions are documented in" README.md; then
+  echo "PASS: README points to architecture documentation"
 else
-  echo "FAIL: README.md is missing"
+  echo "FAIL: README architecture documentation link is missing"
   exit 1
 fi
 
-if [ -f .github/workflows/git-check.yml ]; then
-  echo "PASS: GitHub Actions workflow exists"
-else
-  echo "FAIL: GitHub Actions workflow is missing"
-  exit 1
-fi
-echo "All project tests passed!"
+echo "All project checks passed!"
