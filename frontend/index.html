@@ -1,3 +1,71 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CEX Architecture Lab</title><style>body{font-family:system-ui;max-width:900px;margin:40px auto;padding:0 20px}form{display:grid;gap:12px;max-width:420px}input,select,button{padding:10px;font:inherit}#out{white-space:pre-wrap;background:#111;color:#eee;padding:16px;margin-top:20px}</style></head>
-<body><h1>CEX Order Console</h1><p>Educational exchange workflow: browser → Java API → order state machine.</p><form id="order"><input id="clientOrderId" placeholder="Client order ID" required pattern="[A-Z0-9_-]{3,40}"><input id="symbol" value="BTC-USDT" required><select id="side"><option>BUY</option><option>SELL</option></select><input id="quantity" type="number" min="0.00000001" step="0.00000001" value="0.01" required><button>Create idempotent order</button></form><pre id="out">Ready.</pre><script>const f=document.querySelector('#order'),o=document.querySelector('#out');f.addEventListener('submit',async e=>{e.preventDefault();o.textContent='Submitting…';try{const r=await fetch('http://localhost:8080/api/v1/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientOrderId:clientOrderId.value,symbol:symbol.value.toUpperCase(),side:side.value,quantity:Number(quantity.value)})});o.textContent=JSON.stringify(await r.json(),null,2)}catch(err){o.textContent='API unavailable: '+err.message}});</script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CEX Architecture Lab — Order Console</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">CENTRALIZED EXCHANGE LAB</p>
+    <h1>Order Console</h1>
+    <p class="muted">Browser → Java/Spring Boot API → idempotent order service.</p>
+
+    <section class="grid">
+      <form id="order-form" class="card">
+        <h2>Create order</h2>
+
+        <label>Client order ID
+          <input id="clientOrderId" placeholder="ORDER-001" pattern="[A-Z0-9_-]{3,40}" required>
+        </label>
+
+        <label>User ID
+          <input id="userId" placeholder="user-001" required>
+        </label>
+
+        <div class="row">
+          <label>Symbol
+            <input id="symbol" value="BTC-USDT" required>
+          </label>
+          <label>Side
+            <select id="side">
+              <option>BUY</option>
+              <option>SELL</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Type
+            <select id="type">
+              <option>LIMIT</option>
+              <option>MARKET</option>
+            </select>
+          </label>
+          <label>Quantity
+            <input id="quantity" type="number" min="0.00000001" step="0.00000001" value="0.01" required>
+          </label>
+        </div>
+
+        <label>Price <span class="muted">leave empty for market</span>
+          <input id="price" type="number" min="0" step="0.00000001" placeholder="3500">
+        </label>
+
+        <button type="submit">Create idempotent order</button>
+        <div id="status" class="status" role="status" aria-live="polite">Ready.</div>
+      </form>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Orders</h2>
+          <button id="refresh" type="button" class="secondary">Refresh</button>
+        </div>
+        <div id="orders" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
