@@ -7,27 +7,36 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/v1/orders")
 public class OrderController {
-    private final OrderService service;
+    private final OrderService orderService;
 
-    public OrderController(OrderService service) {
-        this.service = service;
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Order create(@Valid @RequestBody CreateOrderRequest request) {
-        return service.create(request);
+        return orderService.create(request);
     }
 
     @GetMapping
     public List<Order> list() {
-        return service.findAll();
+        return orderService.findAll();
     }
 
-    @PostMapping("/{clientOrderId}/transition/{status}")
-    public Order transition(@PathVariable String clientOrderId, @PathVariable OrderStatus status) {
-        return service.transition(clientOrderId, status);
+    @GetMapping("/{clientOrderId}")
+    public Order get(@PathVariable String clientOrderId) {
+        return orderService.findAll().stream()
+            .filter(order -> order.clientOrderId().equals(clientOrderId))
+            .findFirst()
+            .orElseThrow(OrderNotFoundException::new);
     }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(OrderNotFoundException.class)
+    void notFound() {}
+
+    static class OrderNotFoundException extends RuntimeException {}
 }

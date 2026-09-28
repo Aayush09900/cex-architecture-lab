@@ -1,43 +1,71 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CEX Architecture Lab</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CEX Architecture Lab — Order Console</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="shell">
-    <header>
-      <p class="eyebrow">CEX ARCHITECTURE LAB</p>
-      <h1>Order & Settlement Console</h1>
-      <p class="muted">JavaScript frontend → Spring Boot API → deterministic order state machine.</p>
-    </header>
+    <p class="eyebrow">CENTRALIZED EXCHANGE LAB</p>
+    <h1>Order Console</h1>
+    <p class="muted">Browser → Java/Spring Boot API → idempotent order service.</p>
 
     <section class="grid">
       <form id="order-form" class="card">
         <h2>Create order</h2>
-        <label>Client Order ID<input id="clientOrderId" required value="demo-001" /></label>
-        <label>User ID<input id="userId" required value="user-1001" /></label>
-        <label>Symbol<input id="symbol" required value="ETH-USDT" /></label>
+
+        <label>Client order ID
+          <input id="clientOrderId" placeholder="ORDER-001" pattern="[A-Z0-9_-]{3,40}" required>
+        </label>
+
+        <label>User ID
+          <input id="userId" placeholder="user-001" required>
+        </label>
+
         <div class="row">
-          <label>Side<select id="side"><option>BUY</option><option>SELL</option></select></label>
-          <label>Type<select id="type"><option>LIMIT</option><option>MARKET</option></select></label>
+          <label>Symbol
+            <input id="symbol" value="BTC-USDT" required>
+          </label>
+          <label>Side
+            <select id="side">
+              <option>BUY</option>
+              <option>SELL</option>
+            </select>
+          </label>
         </div>
+
         <div class="row">
-          <label>Quantity<input id="quantity" required type="number" min="0.00000001" step="0.00000001" value="0.10" /></label>
-          <label>Price<input id="price" type="number" min="0" step="0.01" value="3500" /></label>
+          <label>Type
+            <select id="type">
+              <option>LIMIT</option>
+              <option>MARKET</option>
+            </select>
+          </label>
+          <label>Quantity
+            <input id="quantity" type="number" min="0.00000001" step="0.00000001" value="0.01" required>
+          </label>
         </div>
-        <button type="submit">Submit Order</button>
-        <p id="status" class="status" role="status">Ready.</p>
+
+        <label>Price <span class="muted">leave empty for market</span>
+          <input id="price" type="number" min="0" step="0.00000001" placeholder="3500">
+        </label>
+
+        <button type="submit">Create idempotent order</button>
+        <div id="status" class="status" role="status" aria-live="polite">Ready.</div>
       </form>
 
       <section class="card">
-        <div class="section-head"><h2>Orders</h2><button id="refresh" class="secondary">Refresh</button></div>
-        <div id="orders" class="orders"><p class="muted">No orders loaded.</p></div>
+        <div class="section-head">
+          <h2>Orders</h2>
+          <button id="refresh" type="button" class="secondary">Refresh</button>
+        </div>
+        <div id="orders" aria-live="polite"></div>
       </section>
     </section>
   </main>
-  <script src="app.js"></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

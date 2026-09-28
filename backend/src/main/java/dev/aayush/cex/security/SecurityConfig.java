@@ -21,8 +21,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/api/orders").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/orders", "/api/v1/orders/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/orders").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().denyAll());
         return http.build();
@@ -31,7 +31,11 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost:5500", "http://127.0.0.1:5500"));
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+            "http://localhost:8080"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Accept"));
         config.setMaxAge(3600L);
