@@ -11,11 +11,38 @@ They must be connected through explicit boundaries rather than treating an RPC b
 
 ## Order lifecycle
 
-```text
-NEW → VALIDATED → OPEN → PARTIALLY_FILLED → FILLED
-                     │
-                     └──────────────→ CANCELLED
-```
+The order lifecycle uses the statuses defined by the service. The transition table is the contract; any transition not listed below is invalid.
+
+| Current state | Allowed next state(s) | Meaning |
+| --- | --- | --- |
+| `NEW` | `OPEN`, `CANCELLED`, `REJECTED` | A created order is accepted for matching, cancelled before opening, or rejected. |
+| `OPEN` | `PARTIALLY_FILLED`, `FILLED`, `CANCELLED` | An open order can receive a partial fill, complete, or be cancelled. |
+| `PARTIALLY_FILLED` | `FILLED`, `CANCELLED` | Remaining quantity can complete or be cancelled. |
+| `FILLED` | *(none)* | Terminal state; no further transition is allowed. |
+| `CANCELLED` | *(none)* | Terminal state; no further transition is allowed. |
+| `REJECTED` | *(none)* | Terminal state; no further transition is allowed. |
+
+Examples of invalid transitions:
+
+- `NEW → FILLED`: an order cannot be filled before being opened and matched.
+- `OPEN → REJECTED`: once an order is open, this lifecycle does not transition it to rejected; cancel it or advance it through fill states.
+- `PARTIALLY_FILLED → OPEN`: filled quantity cannot be undone by returning to the open state.
+- `FILLED → CANCELLED`: terminal states cannot be reopened or changed.
+- `CANCELLED → OPEN`: cancellation is terminal, so reopening requires a new order with a new identifier.
+
+A transition must be validated against the current persisted state at the point of update. In a multi-worker deployment, a read-check-write sequence without locking or a compare-and-set/optimistic version check is not sufficient: concurrent commands could both read the same old state and overwrite each other. The state transition and any corresponding ledger reservation/release must be committed atomically in the persistence boundary.
+
+## Idempotent order creation
+
+Treat a client-provided idempotency key (in this service, `clientOrderId`) as the identity of a create-order request within its authenticated user/account scope:
+
+1. Normalize and validate the request, then compute a stable fingerprint of the material order fields (for example symbol, side, type, quantity, and price).
+2. Enforce a durable unique constraint on the key plus user/account scope. Create the order and reserve any required funds in one transaction.
+3. If the same key is replayed with the same fingerprint, return the previously created order and its original result. Do not create another order, reserve funds again, or emit a second create event.
+4. If the same key is reused with a different fingerprint, reject the request with a conflict instead of silently returning an unrelated order.
+5. Store the idempotency result long enough to cover client retries and operational replay. Downstream ledger/outbox consumers should use their own unique event keys as well.
+
+The current in-memory lab implementation uses `clientOrderId` with `computeIfAbsent` to reuse an order within one process. That is a demonstration of the basic idea, not a production guarantee: the map is not durable across restarts, it is not shared between replicas, and it does not verify that a repeated key has the same request payload. A production implementation must enforce the durable uniqueness, payload-mismatch, and transaction-boundary rules above in the database.
 
 An order service should be deterministic and idempotent. Replaying the same command must not create a second order or second ledger reservation.
 
