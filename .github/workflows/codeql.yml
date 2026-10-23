@@ -1,5 +1,4 @@
 name: CodeQL Advanced
-
 on:
   push:
     branches: [main]
@@ -8,14 +7,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "44 12 * * 6"
-
 permissions:
   contents: read
-
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -25,7 +21,6 @@ jobs:
       actions: read
       packages: read
       security-events: write
-
     strategy:
       fail-fast: false
       matrix:
@@ -35,21 +30,29 @@ jobs:
           - language: javascript-typescript
             build-mode: none
           - language: java-kotlin
-            build-mode: autobuild
-
+            build-mode: manual
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
+      - name: Set up Java 21 for CodeQL build
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
       - name: Initialize CodeQL
         uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           queries: security-extended
-
+      - name: Build Java backend for CodeQL
+        if: matrix.language == 'java-kotlin'
+        run: mvn -B -f backend/pom.xml package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
